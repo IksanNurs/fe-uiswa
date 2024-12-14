@@ -2,6 +2,7 @@ package com.example.tbsewaku.utils
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -9,6 +10,18 @@ import java.util.Date
 import java.util.Locale
 
 object FileUtils {
+
+  fun createImageUri(context: Context): Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val imageFile = createTempImageFile(context)
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        imageFile
+    )
+}
+
+
     fun createTempImageFile(context: Context): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "JPEG_" + timeStamp + "_"

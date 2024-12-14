@@ -42,17 +42,36 @@ fun TambahBarangScreen(navController: NavHostController) {
     var stock by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(1) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sharedPrefsManager = SharedPrefsManager(context)
     val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
 
-    val imagePicker = rememberLauncherForActivityResult(
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedImageUri = uri
     }
+
+val cameraLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.TakePicture()
+) { success ->
+    if (success && tempImageUri != null) {
+        selectedImageUri = tempImageUri
+    }
+}
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            val uri = FileUtils.createImageUri(context)
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        }
+    }
+
 
     Scaffold(
         topBar = { TopBarTambahBarang(navController) },
@@ -81,14 +100,28 @@ fun TambahBarangScreen(navController: NavHostController) {
                                     contentScale = ContentScale.Fit
                                 )
                             }
-                            Button(
-                                onClick = { imagePicker.launch("image/*") },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A9797))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
-                                Text("Pilih Gambar", color = Color.White)
+                                Button(
+                                    onClick = { galleryLauncher.launch("image/*") },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A9797))
+                                ) {
+                                    Text("Gallery", color = Color.White)
+                                }
+
+
+                                Button(
+                                    onClick = {
+                                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A9797))
+                                ) {
+                                    Text("Camera", color = Color.White)
+                                }
                             }
                         }
-
                         // Form Fields with Custom Style
                         CustomTextField(
                             value = name,
@@ -272,7 +305,7 @@ fun TopBarTambahBarang( navController: NavHostController = rememberNavController
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Button(
-                    onClick = {navController.navigate("profil")},
+                    onClick = {navController.navigate("home")},
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent))
                 {
                     Image(

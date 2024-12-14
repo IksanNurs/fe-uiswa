@@ -17,11 +17,11 @@ interface ApiService {
     @GET("users/self")
     suspend fun getUserSelf(@Header("Authorization") token: String): Response<Map<String, Any>>
 
-  @PUT("users")
-suspend fun updateUser(
-    @Body body: Map<String, String>,  // Change from Map<String, Any?> to Map<String, String>
-    @Header("Authorization") token: String
-): Response<Map<String, Any>>
+      @PUT("users")
+    suspend fun updateUser(
+        @Body body: Map<String, String>,  // Change from Map<String, Any?> to Map<String, String>
+        @Header("Authorization") token: String
+    ): Response<Map<String, Any>>
 
 @Multipart
 @POST("products")
@@ -40,7 +40,12 @@ suspend fun getOrders(
     @Header("Authorization") token: String
 ): Response<Map<String, Any>>
 
-
+@GET("products")
+suspend fun getProducts(
+    @Query("name") name: String? = null,
+    @Query("sort") sort: String? = null,
+    @Header("Authorization") token: String
+): Response<Map<String, Any>>
 
 
     // Endpoint untuk upload gambar

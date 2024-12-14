@@ -125,18 +125,20 @@ suspend fun createProduct(
     token: String,
     name: String,
     description: String,
-    type: String,
+    type: String, 
     price: String,
     stock: String,
     imageFile: File
 ): Boolean {
     return try {
-        val requestFile = RequestBody.create("image/*".toMediaTypeOrNull(), imageFile)
+        // Create image part with specific content type
+        val requestFile = RequestBody.create("image/jpeg".toMediaTypeOrNull(), imageFile)
         val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
         
+        // Create text parts
         val namePart = RequestBody.create("text/plain".toMediaTypeOrNull(), name)
         val descriptionPart = RequestBody.create("text/plain".toMediaTypeOrNull(), description)
-        val typePart = RequestBody.create("text/plain".toMediaTypeOrNull(), type.toString())
+        val typePart = RequestBody.create("text/plain".toMediaTypeOrNull(), type)
         val pricePart = RequestBody.create("text/plain".toMediaTypeOrNull(), price)
         val stockPart = RequestBody.create("text/plain".toMediaTypeOrNull(), stock)
 
@@ -150,12 +152,17 @@ suspend fun createProduct(
             token = "Bearer $token"
         )
 
+        println("DEBUG: CreateProduct response code - ${response.code()}")
+        println("DEBUG: CreateProduct raw response - ${response.raw()}")
+        
         response.isSuccessful
     } catch (e: Exception) {
         println("DEBUG: CreateProduct exception - ${e.message}")
+        e.printStackTrace()
         false
     }
 }
+
 
 
 suspend fun getOrders(token: String): List<Map<String, Any>>? {
@@ -172,5 +179,21 @@ suspend fun getOrders(token: String): List<Map<String, Any>>? {
     }
     return null
 }
+
+suspend fun getProducts(token: String, name: String? = null, sort: String? = null): List<Map<String, Any>>? {
+    try {
+        val response = apiService.getProducts(name, sort, "Bearer $token")
+        if (response.isSuccessful) {
+            val responseBody = response.body()
+            val data = responseBody?.get("data") as? Map<String, Any>
+            val products = data?.get("products") as? List<Map<String, Any>>
+            return products
+        }
+    } catch (e: Exception) {
+        println("DEBUG: GetProducts exception - ${e.message}")
+    }
+    return null
+}
+
 
 }

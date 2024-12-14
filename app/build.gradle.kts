@@ -77,5 +77,6 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.compose.material3)
     implementation(libs.coil.compose)
+    implementation(libs.logging.interceptor)
 
 }

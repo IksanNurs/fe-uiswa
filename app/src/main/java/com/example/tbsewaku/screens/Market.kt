@@ -1,6 +1,5 @@
 package com.example.tbsewaku.screens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,12 +8,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,35 +25,78 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.tbsewaku.R
+import com.example.tbsewaku.data.api.RetrofitClient
+import com.example.tbsewaku.data.preferences.SharedPrefsManager
+import com.example.tbsewaku.data.repository.AuthRepository
+import kotlinx.coroutines.launch
+import android.app.Activity
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 
 // Tambahkan anotasi @OptIn di sini
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController = rememberNavController()) {
+      var searchQuery by remember { mutableStateOf("") }
+        var tempSearchQuery by remember { mutableStateOf("") }
+    var selectedSort by remember { mutableStateOf<String?>(null) }
+    var products by remember { mutableStateOf<List<Map<String, Any>>?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sharedPrefsManager = SharedPrefsManager(context)
+    val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
+
+    // Load products
+    LaunchedEffect(searchQuery, selectedSort) {
+        val token = sharedPrefsManager.getToken()
+        if (token != null) {
+            products = authRepository.getProducts(token, searchQuery, selectedSort)
+        }
+    }
     Scaffold(
         bottomBar = {
             Box { HomeBottomNavigationBar(navController) } // Navigasi bawah dengan nama baru
         }
     ) { paddingValues ->
-        Column(
+         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            SearchBar() // Search bar di atas
-            Spacer(modifier = Modifier.height(8.dp))
-            FilterButtons() // Tombol filter
-            Spacer(modifier = Modifier.height(8.dp))
-            ProductGrid() // Grid produk
+            SearchBar(
+                value = tempSearchQuery,
+                onValueChange = { tempSearchQuery = it },
+                onSearch = { searchQuery = tempSearchQuery }
+            )
+            
+            FilterButtons(
+                onFilterSelected = { sort ->
+                    selectedSort = when(sort) {
+                        "Terdekat" -> "nearest"
+                        "Terfavorit" -> "most_ordered"
+                        "Termurah" -> "price_asc"
+                        else -> null
+                    }
+                }
+            )
+
+            ProductGrid(products = products ?: emptyList())
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar() {
+fun SearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSearch: () -> Unit
+) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -60,8 +105,8 @@ fun SearchBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextField(
-            value = "",
-            onValueChange = {},
+            value = value,
+            onValueChange = onValueChange,
             placeholder = { Text("Search...") },
             modifier = Modifier
                 .weight(1f)
@@ -72,57 +117,50 @@ fun SearchBar() {
                 unfocusedIndicatorColor = Color.Transparent
             )
         )
-        IconButton(onClick = { /* Handle search */ }) {
+      IconButton(onClick = { 
+            onSearch()
+            (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                .hideSoftInputFromWindow((context as Activity).currentFocus?.windowToken, 0)
+        }) {
             Icon(
-                painter = painterResource(id = R.drawable.contoh), // Ganti dengan ikon search
+                imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = Color(0xFF009688)
+                tint = Color(0xFF009688),
+                modifier = Modifier.size(24.dp)
             )
         }
     }
 }
 
+
 @Composable
-fun FilterButtons() {
+fun FilterButtons(onFilterSelected: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        FilterButton("Terdekat")
-        FilterButton("Terfavorit")
-        FilterButton("Termurah")
+        FilterButton("Terdekat") { onFilterSelected("Terdekat") }
+        FilterButton("Terfavorit") { onFilterSelected("Terfavorit") }
+        FilterButton("Termurah") { onFilterSelected("Termurah") }
     }
 }
 
 @Composable
-fun FilterButton(label: String) {
+fun FilterButton(label: String, onClick: () -> Unit) {
     Button(
-        onClick = { /* Handle filter click */ },
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         shape = RoundedCornerShape(24.dp),
-        modifier = Modifier
-            .border(1.dp, Color(0xFF009688), RoundedCornerShape(24.dp))
+        modifier = Modifier.border(1.dp, Color(0xFF009688), RoundedCornerShape(24.dp))
     ) {
-        Text(
-            text = label,
-            color = Color(0xFF009688)
-        )
+        Text(text = label, color = Color(0xFF009688))
     }
 }
 
 @Composable
-fun ProductGrid() {
-    val products = listOf(
-        Product("Kamera Canon", "Rp 250.000/hari", "185+ disewa", R.drawable.contoh),
-        Product("Raket Yonex", "Rp 100.000/hari", "100+ disewa", R.drawable.contoh),
-        Product("Gitar Spanyol", "Rp 80.000/hari", "150+ disewa", R.drawable.contoh),
-        Product("Rice Cooker", "Rp 50.000/hari", "100+ disewa", R.drawable.contoh),
-        Product("Buku", "Rp 20.000/hari", "50+ disewa", R.drawable.contoh),
-        Product("Topi Jerami", "Rp 15.000/hari", "70+ disewa", R.drawable.contoh)
-    )
-
+fun ProductGrid(products: List<Map<String, Any>>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.padding(16.dp),
@@ -131,35 +169,56 @@ fun ProductGrid() {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(products) { product ->
-            ProductCard(product)
+            val user = product["user"] as? Map<String, Any>
+            ProductCard(
+                name = product["name"] as? String ?: "",
+                price = "Rp ${product["price"]}",
+                rentInfo = "${product["orderCount"]}+ disewa",
+                imageUrl = product["image"] as? String,
+                username = user?.get("username") as? String ?: "",
+                distance = product["distance"] as? Double
+            )
         }
     }
 }
 
 @Composable
-fun ProductCard(product: Product) {
+fun ProductCard(
+    name: String,
+    price: String,
+    rentInfo: String,
+    imageUrl: String?,
+    username: String,
+    distance: Double?
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Menambahkan warna putih pada latar belakang Card
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(8.dp)
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = product.name,
+            // Use Coil for image loading
+            AsyncImage(
+                model = "https://4nlg650q-8081.asse.devtunnels.ms/uploads/${imageUrl}",
+                contentDescription = name,
                 modifier = Modifier
                     .size(150.dp)
                     .fillMaxWidth(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.contoh)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(product.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(product.price, color = Color(0xFF009688))
-            Text(product.rentInfo, fontSize = 12.sp, color = Color.Gray)
+            Text(name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(price, color = Color(0xFF009688))
+            Text(rentInfo, fontSize = 12.sp, color = Color.Gray)
+            Text("Pemilik: $username", fontSize = 12.sp)
+            if (distance != null) {
+                Text("${String.format("%.1f", distance)} km", fontSize = 12.sp)
+            }
         }
     }
 }

@@ -244,13 +244,7 @@ fun ContentUserProfileScreen(navController: NavHostController) {
             value = alamat,
             onValueChange = { alamat = it },
             label = "Alamat",
-            leadingIcon = {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_location),
-                    contentDescription = "Location Icon",
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+
         )
 
         Spacer(modifier = Modifier.height(16.dp))

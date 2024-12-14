@@ -78,8 +78,8 @@ fun RegisterScreen(
                 usernameError = "Username tidak boleh kosong"
                 false
             }
-            username.length < 3 -> {
-                usernameError = "Username minimal 3 karakter"
+            username.length < 2 -> {
+                usernameError = "Username minimal 2 karakter"
                 false
             }
             else -> {
@@ -176,9 +176,21 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.padding(vertical = 5.dp))
                     TextField(
                         value = username,
-                        onValueChange = { username = it },
+                        onValueChange = {
+                            username = it
+                            validateUsername()
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50.dp)
+                        shape = RoundedCornerShape(50.dp),
+                        isError = usernameError != null,
+                        supportingText = {
+                            if (usernameError != null) {
+                                Text(
+                                    text = usernameError!!,
+                                    color = Color.Red
+                                )
+                            }
+                        }
                     )
                 }
             }
@@ -196,9 +208,21 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.padding(vertical = 5.dp))
                     TextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            validatePassword()
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50.dp)
+                        shape = RoundedCornerShape(50.dp),
+                        isError = passwordError != null,
+                        supportingText = {
+                            if (passwordError != null) {
+                                Text(
+                                    text = passwordError!!,
+                                    color = Color.Red
+                                )
+                            }
+                        }
                     )
                 }
             }
@@ -216,9 +240,21 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.padding(vertical = 5.dp))
                     TextField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
+                        onValueChange = {
+                            confirmPassword = it
+                            validateConfirmPassword()
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50.dp)
+                        shape = RoundedCornerShape(50.dp),
+                        isError = confirmPasswordError != null,
+                        supportingText = {
+                            if (confirmPasswordError != null) {
+                                Text(
+                                    text = confirmPasswordError!!,
+                                    color = Color.Red
+                                )
+                            }
+                        }
                     )
                 }
             }

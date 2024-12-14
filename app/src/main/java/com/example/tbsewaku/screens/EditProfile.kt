@@ -125,13 +125,13 @@ fun AddressTextField(
         value = value ?: "",  // Use Elvis operator to provide empty string if null
         onValueChange = { },
         label = { Text("Alamat", color = Color.Gray) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "Location",
-                tint = Color(0xFF007A7A)
-            )
-        },
+//        leadingIcon = {
+//            Icon(
+//                imageVector = Icons.Default.LocationOn,
+//                contentDescription = "Location",
+//                tint = Color(0xFF007A7A)
+//            )
+//        },
         readOnly = true,
         modifier = Modifier
             .fillMaxWidth()
