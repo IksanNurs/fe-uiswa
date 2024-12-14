@@ -195,5 +195,20 @@ suspend fun getProducts(token: String, name: String? = null, sort: String? = nul
     return null
 }
 
+suspend fun updateOrderStatus(token: String, orderId: Int, status: Int): Boolean {
+    try {
+        val response = apiService.updateOrder(
+            orderId = orderId,
+            body = mapOf("status" to status),
+            token = "Bearer $token"
+        )
+        return response.isSuccessful
+    } catch (e: Exception) {
+        println("DEBUG: UpdateOrder exception - ${e.message}")
+        return false
+    }
+}
+
+
 
 }

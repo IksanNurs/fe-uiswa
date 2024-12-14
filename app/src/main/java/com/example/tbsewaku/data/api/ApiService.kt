@@ -47,6 +47,13 @@ suspend fun getProducts(
     @Header("Authorization") token: String
 ): Response<Map<String, Any>>
 
+@PUT("orders/{id}")
+suspend fun updateOrder(
+    @Path("id") orderId: Int,
+    @Body body: Map<String, Int>,
+    @Header("Authorization") token: String
+): Response<Map<String, Any>>
+
 
     // Endpoint untuk upload gambar
     @Multipart

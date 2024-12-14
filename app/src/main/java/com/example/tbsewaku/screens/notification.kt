@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +31,9 @@ import com.example.tbsewaku.R
 import com.example.tbsewaku.data.api.RetrofitClient
 import com.example.tbsewaku.data.preferences.SharedPrefsManager
 import com.example.tbsewaku.data.repository.AuthRepository
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun NotificationScreen(navController: NavHostController = rememberNavController()) {
@@ -38,8 +42,9 @@ fun NotificationScreen(navController: NavHostController = rememberNavController(
     val token = sharedPrefsManager.getToken() ?: ""
     val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
     var orders = remember { mutableStateOf<List<Map<String, Any>>?>(null) }
+    var refreshTrigger = remember { mutableStateOf(0) }
 
-    LaunchedEffect(key1 = true) {
+    LaunchedEffect(refreshTrigger.value) {
         orders.value = authRepository.getOrders(token)
     }
 
@@ -57,9 +62,13 @@ fun NotificationScreen(navController: NavHostController = rememberNavController(
         ) {
             TopBarNotification()
             Spacer(modifier = Modifier.height(16.dp))
-            
             orders.value?.forEach { order ->
-                NotificationCard(order)
+                NotificationCard(
+                    order = order,
+                    refreshTrigger = refreshTrigger.value
+                ) {
+                    refreshTrigger.value = refreshTrigger.value + 1
+                }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -100,10 +109,24 @@ fun TopBarNotification() {
 }
 
 @Composable
-fun NotificationCard(order: Map<String, Any>) {
+fun NotificationCard(order: Map<String, Any>, refreshTrigger: Int,
+    onRefresh: () -> Unit) {
     val user = order["user"] as? Map<String, Any>
     val product = order["product"] as? Map<String, Any>
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sharedPrefsManager = SharedPrefsManager(context)
+    val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
     
+    val status = (order["status"] as? Double)?.toInt() ?: 0
+    val orderId = (order["id"] as? Double)?.toInt() ?: 0
+      val formatDate = { dateString: String ->
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("d MMMM yyyy", Locale("id"))
+        val date = inputFormat.parse(dateString)
+        outputFormat.format(date)
+    }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
@@ -156,37 +179,74 @@ fun NotificationCard(order: Map<String, Any>) {
                 
                 Spacer(modifier = Modifier.padding(vertical = 2.dp))
                 
-                Text(
-                    text = "Jumlah: ${order["quantity"]}\n" +
-                           "Tanggal Peminjaman: ${order["loan_date"]}\n" +
-                           "Tanggal Pengembalian: ${order["return_date"]}",
-                    fontSize = 14.sp,
-                    color = Color.White
-                )
+                  Text(
+        text = "Jumlah: ${order["quantity"]}\n" +
+               "Peminjaman: ${formatDate(order["loan_date"] as String)}\n" +
+               "Pengembalian: ${formatDate(order["return_date"] as String)}",
+        fontSize = 14.sp,
+        color = Color.White
+    )
+     Spacer(modifier = Modifier.padding(vertical = 2.dp))
+                
+                        Text(
+                text = when(status) {
+                    0 -> "Menunggu"
+                    1 -> "Disetujui"
+                    2 -> "Ditolak"
+                    3 -> "Selesai"
+                    else -> ""
+                },
+                color = when(status) {
+                    0 -> Color.DarkGray
+                    1 -> Color.DarkGray
+                    2 -> Color.DarkGray
+                    3 -> Color.DarkGray
+                    else -> Color.DarkGray
+                }
+            )
+
             }
         }
 
-        Row(modifier = Modifier.padding(10.dp)) {
-            Button(
-                onClick = { /* Handle Ditolak */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-            ) {
-                Text("Ditolak", color = Color.White)
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            Button(
-                onClick = { /* Handle Disetujui */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-            ) {
-                Text("Disetujui", color = Color.White)
+        if (status == 0) {
+            Row(modifier = Modifier.padding(10.dp)) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val token = sharedPrefsManager.getToken() ?: return@launch
+                           val success = authRepository.updateOrderStatus(token, orderId, 2)
+                            if (success) {
+                                 onRefresh()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                ) {
+                    Text("Ditolak", color = Color.White)
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val token = sharedPrefsManager.getToken() ?: return@launch
+                            val success = authRepository.updateOrderStatus(token, orderId, 1)
+                            if (success) {
+                                 onRefresh()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                ) {
+                    Text("Disetujui", color = Color.White)
+                }
             }
         }
     }
