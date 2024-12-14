@@ -126,7 +126,10 @@ fun PesananSection(navController: NavHostController = rememberNavController()){
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent))
                 {
                     Column (
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            navController.navigate("proses")
+                        }
                     ){
                         Image(
                             painter = painterResource(R.drawable.proses),

@@ -1,12 +1,13 @@
 package com.example.tbsewaku.screens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,30 +36,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.tbsewaku.R
 
 @Composable
-fun Proses(){
+fun Proses(navController: NavHostController = rememberNavController(),){
     Scaffold (
         topBar = {
-            TopBarProses()
+            TopBarProses(navController)
         },
         content = { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
                 LazyColumn { item {
-                    ContentProses()
+                    ContentProses(
+                        namaPeminjam = "Asep Susila",
+                        namaBarang = "Kamera Nikon",
+                        jumlahBarang = 1,
+                        tanggalPeminjaman = "1 Januari 2024",
+                        tanggalPengembalian = "3 Januari 2024",
+                        imageRes = R.drawable.kamera
+                    )
                 } }
             }
         },
-        bottomBar = {
-            BottomBarProses()
-        }
-    )
+
+        )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarProses(){
+fun TopBarProses(navController: NavHostController = rememberNavController()){
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color(0xFF2A9797)
@@ -67,38 +77,102 @@ fun TopBarProses(){
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(100.dp)
-                )
-                Text(
-                    text = "Riwayat",
-                    color = Color.White,
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Button(
+                    onClick = {navController.navigate("riwayat")},
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent))
+                {
+                    Image(
+                        painter = painterResource(R.drawable.back),
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 10.dp))
+                    Text(
+                        text = "Proses",
+                        color = Color.White,
+                        fontSize = 35.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     )
 }
 
 @Composable
-fun ContentProses(){
-    Card (
+fun ContentProses(
+    namaPeminjam: String,
+    namaBarang: String,
+    jumlahBarang: Int,
+    tanggalPeminjaman: String,
+    tanggalPengembalian: String,
+    imageRes: Int
+){
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 30.dp, vertical = 20.dp)
-            .height(150.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2A9797),
-            contentColor = Color.White)
-    ){
-        Row {
-
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2A9797)),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = namaPeminjam,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = namaBarang,
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                        Text(
+                            text = namaBarang,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Jumlah: $jumlahBarang",
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Tanggal Peminjaman: $tanggalPeminjaman",
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Tanggal Pengembalian: $tanggalPengembalian",
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
 
 @Composable
 fun BottomBarProses(){
@@ -134,7 +208,7 @@ fun BottomBarProses(){
         ){
             IconButton(onClick = {}){
                 Image(
-                    painter = painterResource(R.drawable.home),
+                    painter = painterResource(R.drawable.homeh),
                     contentDescription = null,
                     modifier = Modifier.size(30.dp)
                 )

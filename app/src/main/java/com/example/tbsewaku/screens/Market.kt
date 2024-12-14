@@ -34,6 +34,8 @@ import kotlinx.coroutines.launch
 import android.app.Activity
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.clickable
+import androidx.navigation.NavController
 
 // Tambahkan anotasi @OptIn di sini
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +85,7 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
                 }
             )
 
-            ProductGrid(products = products ?: emptyList())
+            ProductGrid(products = products ?: emptyList(), navController)
         }
     }
 }
@@ -160,7 +162,7 @@ fun FilterButton(label: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun ProductGrid(products: List<Map<String, Any>>) {
+fun ProductGrid(products: List<Map<String, Any>>, navController: NavController = rememberNavController()) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.padding(16.dp),
@@ -170,14 +172,21 @@ fun ProductGrid(products: List<Map<String, Any>>) {
     ) {
         items(products) { product ->
             val user = product["user"] as? Map<String, Any>
-            ProductCard(
-                name = product["name"] as? String ?: "",
-                price = "Rp ${product["price"]}",
-                rentInfo = "${product["orderCount"]}+ disewa",
-                imageUrl = product["image"] as? String,
-                username = user?.get("username") as? String ?: "",
-                distance = product["distance"] as? Double
-            )
+            Card(
+                modifier = Modifier.clickable{
+                    navController.currentBackStackEntry?.savedStateHandle?.set("product", product)
+                    navController.navigate("detail_market")
+                }
+            ) {
+                ProductCard(
+                    name = product["name"] as? String ?: "",
+                    price = "Rp ${product["price"]}",
+                    rentInfo = "${product["orderCount"]}+ disewa",
+                    imageUrl = product["image"] as? String,
+                    username = user?.get("username") as? String ?: "",
+                    distance = product["distance"] as? Double
+                )
+            }
         }
     }
 }
@@ -209,7 +218,7 @@ fun ProductCard(
                     .size(150.dp)
                     .fillMaxWidth(),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = R.drawable.contoh)
+                placeholder = painterResource(id = R.drawable.logo)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(name, fontWeight = FontWeight.Bold, fontSize = 16.sp)

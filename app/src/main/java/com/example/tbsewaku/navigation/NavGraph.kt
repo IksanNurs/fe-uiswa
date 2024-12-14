@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.tbsewaku.screens.DetailMarketScreen
 import com.example.tbsewaku.screens.EditProfile
 import com.example.tbsewaku.screens.HomeScreen
 import com.example.tbsewaku.screens.SplashScreen
@@ -12,6 +13,7 @@ import com.example.tbsewaku.screens.Login
 import com.example.tbsewaku.screens.Homepage
 import com.example.tbsewaku.screens.MapScreen
 import com.example.tbsewaku.screens.NotificationScreen
+import com.example.tbsewaku.screens.Proses
 import com.example.tbsewaku.screens.Rate
 import com.example.tbsewaku.screens.RatePreview
 import com.example.tbsewaku.screens.RegisterScreen
@@ -34,9 +36,11 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("riwayat") { Riwayat(navController) }
         composable("edit_profil") { EditProfile(navController) }
         composable("market") { HomeScreen(navController) }
+        composable("detail_market") { DetailMarketScreen(navController) }
         composable("create_product") { TambahBarangScreen(navController) }
         composable("done") { Selesai(navController) }
         composable("rate") {  Rate(navController) }
+        composable("proses") {  Proses(navController) }
         composable("maps") { MapScreen(navController) }
     }
 }
