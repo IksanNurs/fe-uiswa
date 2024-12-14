@@ -165,13 +165,12 @@ suspend fun createProduct(
 
 
 
-suspend fun getOrders(token: String): List<Map<String, Any>>? {
+suspend fun getOrders(token: String, status: Int? = null): List<Map<String, Any>>? {
     try {
-        val response = apiService.getOrders("Bearer $token")
+        val response = apiService.getOrders("Bearer $token", status)
         if (response.isSuccessful) {
             val responseBody = response.body()
             val data = responseBody?.get("data") as? List<Map<String, Any>>
-            println("DEBUG: Orders Response: $data")
             return data
         }
     } catch (e: Exception) {
@@ -179,6 +178,7 @@ suspend fun getOrders(token: String): List<Map<String, Any>>? {
     }
     return null
 }
+
 
 suspend fun getProducts(token: String, name: String? = null, sort: String? = null): List<Map<String, Any>>? {
     try {
@@ -208,6 +208,21 @@ suspend fun updateOrderStatus(token: String, orderId: Int, status: Int): Boolean
         return false
     }
 }
+
+suspend fun updateOrderRate(token: String, orderId: Int, rate: Int): Boolean {
+    try {
+        val response = apiService.updateOrder(
+            orderId = orderId,
+            body = mapOf("rate" to rate),
+            token = "Bearer $token"
+        )
+        return response.isSuccessful
+    } catch (e: Exception) {
+        println("DEBUG: UpdateRate exception - ${e.message}")
+        return false
+    }
+}
+
 
 
 

@@ -27,9 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,26 +43,45 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.tbsewaku.R
+import com.example.tbsewaku.data.api.RetrofitClient
+import com.example.tbsewaku.data.preferences.SharedPrefsManager
+import com.example.tbsewaku.data.repository.AuthRepository
+import com.example.tbsewaku.utils.FileUtils
 
 @Composable
 fun Proses(navController: NavHostController = rememberNavController(),){
+    val context = LocalContext.current
+    val sharedPrefsManager = SharedPrefsManager(context)
+    val token = sharedPrefsManager.getToken() ?: ""
+    val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
+    val orders = remember { mutableStateOf<List<Map<String, Any>>?>(null) }
+
+    LaunchedEffect(Unit) {
+        orders.value = authRepository.getOrders(token, 0)
+    }
     Scaffold (
         topBar = {
             TopBarProses(navController)
         },
         content = { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
-                LazyColumn { item {
-                    ContentProses(
-                        namaPeminjam = "Asep Susila",
-                        namaBarang = "Kamera Nikon",
-                        jumlahBarang = 1,
-                        tanggalPeminjaman = "1 Januari 2024",
-                        tanggalPengembalian = "3 Januari 2024",
-                        imageRes = R.drawable.kamera
-                    )
-                } }
+               LazyColumn {
+                items(orders.value?.size ?: 0) { index ->
+                    orders.value?.get(index)?.let { order ->
+                        ContentProses(
+                            namaPeminjam = (order["user"] as? Map<*, *>)?.get("username") as? String ?: "",
+                            namaBarang = (order["product"] as? Map<*, *>)?.get("name") as? String ?: "",
+                            jumlahBarang = (order["quantity"] as? Number)?.toInt() ?: 0,
+                            tanggalPeminjaman = FileUtils.formatDate(order["loan_date"] as? String ?: ""),
+                            tanggalPengembalian = FileUtils.formatDate(order["return_date"] as? String ?: ""),
+                            imageRes = "https://4nlg650q-8081.asse.devtunnels.ms/uploads/${(order["product"] as? Map<*, *>)?.get("image") as? String ?: ""}",
+
+                            )
+                    }
+                }
+            }
             }
         },
 
@@ -106,7 +130,7 @@ fun ContentProses(
     jumlahBarang: Int,
     tanggalPeminjaman: String,
     tanggalPengembalian: String,
-    imageRes: Int
+    imageRes: String
 ){
     Column(
         modifier = Modifier
@@ -138,10 +162,13 @@ fun ContentProses(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = imageRes),
+
+                    AsyncImage(
                         contentDescription = namaBarang,
-                        modifier = Modifier.size(80.dp)
+                        model =imageRes,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
                     )
                     Column(modifier = Modifier.padding(start = 16.dp)) {
                         Text(

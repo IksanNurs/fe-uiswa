@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,27 +46,54 @@ import androidx.compose.ui.zIndex
 import com.example.tbsewaku.R
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.example.tbsewaku.data.api.RetrofitClient
+import com.example.tbsewaku.data.preferences.SharedPrefsManager
+import com.example.tbsewaku.data.repository.AuthRepository
+import com.example.tbsewaku.utils.FileUtils
+import kotlinx.coroutines.launch
 
 @Composable
 fun Rate(navController: NavHostController = rememberNavController(),){
+      val context = LocalContext.current
+    val sharedPrefsManager = SharedPrefsManager(context)
+    val token = sharedPrefsManager.getToken() ?: ""
+    val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
+    val orders = remember { mutableStateOf<List<Map<String, Any>>?>(null) }
+
+    LaunchedEffect(Unit) {
+        orders.value = authRepository.getOrders(token, 1)
+    }
     Scaffold (
         topBar = {
             TopBarRate(navController)
         },
         content = { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
-                LazyColumn { item {
-                    ContentRate(
-                        namaPeminjam = "Asep Susila",
-                        namaBarang = "Kamera Nikon",
-                        jumlahBarang = 1,
-                        tanggalPeminjaman = "1 Januari 2024",
-                        tanggalPengembalian = "3 Januari 2024",
-                        imageRes = R.drawable.kamera
-                    )
-                } }
+              LazyColumn {
+                items(orders.value?.size ?: 0) { index ->
+                    orders.value?.get(index)?.let { order ->
+                        ContentRate(
+                            namaPeminjam = (order["user"] as? Map<*, *>)?.get("username") as? String ?: "",
+                            namaBarang = (order["product"] as? Map<*, *>)?.get("name") as? String ?: "",
+                            jumlahBarang = (order["quantity"] as? Number)?.toInt() ?: 0,
+                            tanggalPeminjaman = FileUtils.formatDate(order["loan_date"] as? String ?: ""),
+                            tanggalPengembalian = FileUtils.formatDate(order["return_date"] as? String ?: ""),
+                            imageRes = "https://4nlg650q-8081.asse.devtunnels.ms/uploads/${(order["product"] as? Map<*, *>)?.get("image") as? String ?: ""}",
+                            orderId=(order["id"] as? Number)?.toInt() ?: 0,
+                            initialRate = (order["rate"] as? Number)?.toInt()
+
+                            )
+                    }
+                }
+            }
             }
         },
 
@@ -114,8 +142,35 @@ fun ContentRate(
     jumlahBarang: Int,
     tanggalPeminjaman: String,
     tanggalPengembalian: String,
-    imageRes: Int
+    imageRes: String,
+    orderId: Int,
+    initialRate: Int? // Add initial rate parameter
 ){
+    var rating by remember { mutableStateOf(initialRate ?: 0) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sharedPrefsManager = SharedPrefsManager(context)
+    val authRepository = AuthRepository(RetrofitClient.apiService, sharedPrefsManager)
+     var showSuccessDialog by remember { mutableStateOf(false) }
+
+if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showSuccessDialog = false },
+            title = { Text("Berhasil", fontWeight = FontWeight.Bold) },
+            text = { Text("Rating berhasil dikirim!") },
+            confirmButton = {
+                Button(
+                    onClick = { showSuccessDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A9797))
+                ) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            containerColor = Color.White,
+            titleContentColor = Color(0xFF2A9797),
+            textContentColor = Color.Black
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -146,10 +201,12 @@ fun ContentRate(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = imageRes),
+                       AsyncImage(
                         contentDescription = namaBarang,
-                        modifier = Modifier.size(80.dp)
+                        model =imageRes,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
                     )
                     Column(modifier = Modifier.padding(start = 16.dp)) {
                         Text(
@@ -180,25 +237,41 @@ fun ContentRate(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 // Rating Stars
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    var rating by remember { mutableStateOf(0) }
-                    
-                    repeat(5) { index ->
-                        IconButton(
-                            onClick = { rating = index + 1 }
-                        ) {
-                            Icon(
-                                imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.Star,
-                                contentDescription = "Star ${index + 1}",
-                                tint = if (index < rating) Color.Yellow else Color.White,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
+              Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row {
+                repeat(5) { index ->
+                    IconButton(onClick = { rating = index + 1 }) {
+                        Icon(
+                            imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.Star,
+                            contentDescription = "Star ${index + 1}",
+                            tint = if (index < rating) Color.Yellow else Color.White,
+                            modifier = Modifier.size(30.dp)
+                        )
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        val token = sharedPrefsManager.getToken() ?: return@launch
+                        val success = authRepository.updateOrderRate(token, orderId, rating)
+                       if (success) {
+                            showSuccessDialog = true
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))
+            ) {
+                Text("Kirim", color = Color.White)
+            }
+        }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 

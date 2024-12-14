@@ -10,8 +10,19 @@ import java.util.Date
 import java.util.Locale
 
 object FileUtils {
+    fun formatDate(dateString: String): String {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("d MMMM yyyy", Locale("id"))
+        return try {
+            val date = inputFormat.parse(dateString)
+            outputFormat.format(date)
+        } catch (e: Exception) {
+            dateString
+        }
+    }
 
-  fun createImageUri(context: Context): Uri {
+
+    fun createImageUri(context: Context): Uri {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val imageFile = createTempImageFile(context)
     return FileProvider.getUriForFile(

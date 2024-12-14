@@ -37,7 +37,8 @@ suspend fun createProduct(
 
 @GET("orders")
 suspend fun getOrders(
-    @Header("Authorization") token: String
+    @Header("Authorization") token: String,
+    @Query("status") status: Int? = null
 ): Response<Map<String, Any>>
 
 @GET("products")
