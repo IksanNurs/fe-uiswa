@@ -50,7 +50,7 @@ fun Homepage(
         content = { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
                 LazyColumn { item {
-                    ContentHome()
+                    ContentHome(navController)
                 } }
             }
         },
@@ -96,9 +96,9 @@ fun TopBar(navController: NavHostController){
 }
 
 @Composable
-fun ContentHome(){
+fun ContentHome(navController: NavHostController){
     Card(
-        onClick = {},
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
@@ -124,6 +124,7 @@ fun ContentHome(){
         }
     }
     Card(
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
@@ -146,6 +147,7 @@ fun ContentHome(){
         }
     }
     Card(
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
@@ -166,6 +168,7 @@ fun ContentHome(){
        }
     }
     Card(
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
@@ -186,6 +189,7 @@ fun ContentHome(){
        }
     }
     Card(
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
@@ -206,6 +210,7 @@ fun ContentHome(){
        }
     }
     Card(
+        onClick = {navController.navigate("market")},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp, vertical = 10.dp)
